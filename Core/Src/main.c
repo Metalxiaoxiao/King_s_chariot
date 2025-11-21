@@ -69,10 +69,10 @@ typedef struct
     uint32_t Channel;
 } Motor_t;
 Motor_t motor[4] = {
-    {GPIOA, LF_1_AIN2_Pin, GPIOA, LF_1_AIN1_Pin, &htim2, LF_PWM_TIM2_Pin},
-    {GPIOA, RF_1_BIN1_Pin, GPIOA, RF_1_BIN2_Pin, &htim2, RF_PWM_TIM2_Pin},
-    {GPIOA, LB_2_BIN2_Pin, GPIOA, LB_2_BIN1_Pin, &htim1, LB_PWM_TIM1_Pin},
-    {GPIOA, RB_2_AIN1_Pin, GPIOA, RB_2_AIN2_Pin, &htim1, RB_PWM_TIM1_Pin},
+    {GPIOA, LF_1_AIN2_Pin, GPIOA, LF_1_AIN1_Pin, &htim2, TIM_CHANNEL_2},
+    {GPIOA, RF_1_BIN1_Pin, GPIOA, RF_1_BIN2_Pin, &htim2, TIM_CHANNEL_1},
+    {GPIOA, LB_2_BIN2_Pin, GPIOA, LB_2_BIN1_Pin, &htim1, TIM_CHANNEL_4},
+    {GPIOA, RB_2_AIN1_Pin, GPIOA, RB_2_AIN2_Pin, &htim1, TIM_CHANNEL_3},
 };
 
 void Motor_Init(void)
@@ -218,19 +218,19 @@ int main(void)
 
         if (PS2.UP)
         {
-            dutyUpDown += positionChangeSpeed;
+            UpDownPosition += positionChangeSpeed;
         }
         else if (PS2.DOWN)
         {
-            dutyUpDown -= positionChangeSpeed;
+            UpDownPosition -= positionChangeSpeed;
         }
         if (PS2.LEFT)
         {
-            dutyLeftRight -= positionChangeSpeed;
+            LeftRightPosition -= positionChangeSpeed;
         }
         else if (PS2.RIGHT)
         {
-            dutyLeftRight += positionChangeSpeed;
+            LeftRightPosition += positionChangeSpeed;
         }
 
         if (PS2.SQUARE)
