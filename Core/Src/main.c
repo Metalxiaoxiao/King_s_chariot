@@ -101,9 +101,9 @@ void Motor_SetSpeed(uint8_t id, int16_t pwm)
         __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, 0);
     }
 }
-int positionChangeSpeed = 10;
-int UpDownPosition = 20;
-int LeftRightPosition = 15;
+double positionChangeSpeed = 10;
+double UpDownPosition = 20;
+double LeftRightPosition = 15;
 /* USER CODE END 0 */
 
 /**
@@ -139,7 +139,7 @@ int main(void)
     MX_TIM2_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
-    MX_USART1_UART_Init();
+    MX_USART3_UART_Init();
     PS2Buttons PS2;
     PS2_Init(&htim3, &PS2);
 
@@ -164,6 +164,23 @@ int main(void)
         // Update PS2 controller state
         PS2_Update();
 
+        if (UpDownPosition > 100)
+        {
+            UpDownPosition = 100;
+        }
+        if (UpDownPosition < 0)
+        {
+            UpDownPosition = 0;
+        }
+        if (LeftRightPosition > 100)
+        {
+            LeftRightPosition = 100;
+        }
+        if (LeftRightPosition < 0)
+        {
+            LeftRightPosition = 0;
+        }
+        
         // Convert PS2 analog stick values (0-255) to normalized stick values (-1 to 1)
         // LX, LY control left stick (movement)
         // RX, RY control right stick (rotation, LY also affects forward/backward)
@@ -196,8 +213,8 @@ int main(void)
             Motor_SetSpeed(i, motor_pwm[i]);
         }
 
-        double dutyUpDown = ((10.00 * UpDownPosition) + 2.50) / 100.00 * 20000.00;
-        double dutyLeftRight = ((10.00 * LeftRightPosition) + 2.50) / 100.00 * 20000.00;
+        double dutyUpDown = ((10.00 * UpDownPosition/100) + 2.50) / 100.00 * 20000.00;
+        double dutyLeftRight = ((10.00 * LeftRightPosition/100) + 2.50) / 100.00 * 20000.00;
 
         if (PS2.UP)
         {
@@ -226,8 +243,8 @@ int main(void)
         {
         }
 
-        __HAL_TIM_SetCompare(&htim1, DJ1_TIM1_Pin, dutyUpDown);
-        __HAL_TIM_SetCompare(&htim4, DJ2_TIM1_Pin, dutyLeftRight);
+        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_2, dutyUpDown);
+        __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, dutyLeftRight);
 
         // Control loop frequency: 50ms = 20Hz
         // Adjust if needed for different control responsiveness
