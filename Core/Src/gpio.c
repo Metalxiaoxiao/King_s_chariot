@@ -67,20 +67,25 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SS_Pin SCK_Pin MOSI_Pin LF_1_AIN2_Pin
-                           RF_1_BIN1_Pin RF_1_BIN2_Pin */
-  GPIO_InitStruct.Pin = SS_Pin|SCK_Pin|MOSI_Pin|LF_1_AIN2_Pin
-                          |RF_1_BIN1_Pin|RF_1_BIN2_Pin;
+  /*Configure GPIO pins : SS_Pin SCK_Pin MOSI_Pin */
+  GPIO_InitStruct.Pin = SS_Pin|SCK_Pin|MOSI_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MISO_Pin */
   GPIO_InitStruct.Pin = MISO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(MISO_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LF_1_AIN2_Pin RF_1_BIN1_Pin RF_1_BIN2_Pin */
+  GPIO_InitStruct.Pin = LF_1_AIN2_Pin|RF_1_BIN1_Pin|RF_1_BIN2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

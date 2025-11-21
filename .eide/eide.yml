@@ -76,6 +76,7 @@ targets:
         - Drivers/CMSIS/Include
         - .cmsis/include
         - MDK-ARM/RTE/_King_s_chariot
+        - Core/Src
       libList: []
     excludeList: []
     toolchain: AC5
@@ -138,7 +139,7 @@ targets:
       OpenOCD:
         baseAddr: "0x08000000"
         bin: ""
-        interface: stlink
+        interface: cmsis-dap-v1
         target: stm32f1x
       STLink:
         address: ""
