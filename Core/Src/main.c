@@ -85,34 +85,21 @@ void Motor_SetSpeed(uint8_t id, int16_t pwm)
         return;
     if (pwm > 0)
     {
-        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) == GPIO_PIN_RESET)
-        {
-            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
-            __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, pwm);
-        }
-        
+        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
+        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, pwm);
     }
     else if (pwm < 0)
     {
-        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) == GPIO_PIN_SET)
-        {
-            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_SET);
-            __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, -pwm);
-        }
-        
+        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_SET);
+        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, -pwm);
     }
-
     else
     {
-        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) != GPIO_PIN_RESET || HAL_GPIO_ReadPin(motor[id].IN2_Port, motor[id].IN2_Pin) != GPIO_PIN_RESET)
-        {
-            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
-             __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, 0);
-        }
-       
+        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
+        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, 0);
     }
 }
 double positionChangeSpeed = 0.2;
