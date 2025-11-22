@@ -24,6 +24,7 @@
 #include "string.h"
 #include "tim.h"
 #include "usart.h"
+#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -69,10 +70,10 @@ typedef struct
     uint32_t Channel;
 } Motor_t;
 Motor_t motor[4] = {
-    {GPIOA, LF_1_AIN2_Pin, GPIOA, LF_1_AIN1_Pin, &htim2, TIM_CHANNEL_2},
-    {GPIOA, RF_1_BIN1_Pin, GPIOA, RF_1_BIN2_Pin, &htim2, TIM_CHANNEL_1},
-    {GPIOA, LB_2_BIN2_Pin, GPIOA, LB_2_BIN1_Pin, &htim1, TIM_CHANNEL_4},
-    {GPIOA, RB_2_AIN1_Pin, GPIOA, RB_2_AIN2_Pin, &htim1, TIM_CHANNEL_3},
+    {LF_1_AIN2_GPIO_Port, LF_1_AIN2_Pin, LF_1_AIN1_GPIO_Port, LF_1_AIN1_Pin, &htim2, TIM_CHANNEL_2},
+    {RF_1_BIN1_GPIO_Port, RF_1_BIN1_Pin, RF_1_BIN2_GPIO_Port, RF_1_BIN2_Pin, &htim2, TIM_CHANNEL_1},
+    {LB_2_BIN2_GPIO_Port, LB_2_BIN2_Pin, LB_2_BIN1_GPIO_Port, LB_2_BIN1_Pin, &htim1, TIM_CHANNEL_4},
+    {RB_2_AIN1_GPIO_Port, RB_2_AIN1_Pin, RB_2_AIN2_GPIO_Port, RB_2_AIN2_Pin, &htim1, TIM_CHANNEL_3},
 };
 
 void Motor_Init(void)
@@ -84,24 +85,37 @@ void Motor_SetSpeed(uint8_t id, int16_t pwm)
         return;
     if (pwm > 0)
     {
-        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
-        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, pwm);
+        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) == GPIO_PIN_RESET)
+        {
+            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
+            __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, pwm);
+        }
+        
     }
     else if (pwm < 0)
     {
-        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_SET);
-        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, -pwm);
+        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) == GPIO_PIN_SET)
+        {
+            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_SET);
+            __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, -pwm);
+        }
+        
     }
+
     else
     {
-        HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
-        __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, 0);
+        if (HAL_GPIO_ReadPin(motor[id].IN1_Port, motor[id].IN1_Pin) != GPIO_PIN_RESET || HAL_GPIO_ReadPin(motor[id].IN2_Port, motor[id].IN2_Pin) != GPIO_PIN_RESET)
+        {
+            HAL_GPIO_WritePin(motor[id].IN1_Port, motor[id].IN1_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(motor[id].IN2_Port, motor[id].IN2_Pin, GPIO_PIN_RESET);
+             __HAL_TIM_SET_COMPARE(motor[id].htim, motor[id].Channel, 0);
+        }
+       
     }
 }
-double positionChangeSpeed = 10;
+double positionChangeSpeed = 0.2;
 double UpDownPosition = 20;
 double LeftRightPosition = 15;
 /* USER CODE END 0 */
@@ -180,42 +194,51 @@ int main(void)
         {
             LeftRightPosition = 0;
         }
-        
+
         // Convert PS2 analog stick values (0-255) to normalized stick values (-1 to 1)
         // LX, LY control left stick (movement)
         // RX, RY control right stick (rotation, LY also affects forward/backward)
-        float lx = (PS2.LX - 128) / 128.0f; // Left stick X: -1 to 1 (left/right strafe)
-        float ly = (128 - PS2.LY) / 128.0f; // Left stick Y: -1 to 1 (forward/backward)
-        float rx = (PS2.RX - 128) / 128.0f; // Right stick X: -1 to 1 (rotation)
+        float lx = ((float)PS2.LX - 128.00) / 128.0f; // Left stick X: -1 to 1 (left/right strafe)
+        float ly = (128.00 - (float)PS2.LY) / 128.0f; // Left stick Y: -1 to 1 (forward/backward)
+        float rx = ((float)PS2.RX - 128.00) / 128.0f; // Right stick X: -1 to 1 (rotation)
 
-// Apply smooth deadzone function to eliminate stick drift
-// This creates a smooth transition from 0 to full value
-#define DEADZONE_THRESHOLD 0.08f // 8% of full range
-#define apply_deadzone(x) (fabsf(x) < DEADZONE_THRESHOLD ? 0 : (x > 0 ? (x - DEADZONE_THRESHOLD) : (x + DEADZONE_THRESHOLD)) * (1.0f / (1.0f - DEADZONE_THRESHOLD)))
-
-        lx = apply_deadzone(lx);
-        ly = apply_deadzone(ly);
-        rx = apply_deadzone(rx);
+        // Deadzone
+        if (fabsf(lx) < 0.1f)
+            lx = 0.0f;
+        if (fabsf(ly) < 0.1f)
+            ly = 0.0f;
+        if (fabsf(rx) < 0.1f)
+            rx = 0.0f;
 
         // Scale velocities based on stick deflection magnitude
         // Adjust these coefficients to tune speed responsiveness
-        float vx = ly * 30.0f;    // Forward velocity: max ~30 (scale to match Mecanum_Calc expectations)
-        float vy = lx * 30.0f;    // Lateral velocity: max ~30
-        float omega = rx * 15.0f; // Angular velocity: max ~15
+        float vx = ly * 600.0f;     // Forward velocity: max ~30
+        float vy = lx * 600.0f;     // Lateral velocity: max ~30
+        float omega = rx * 4000.0f; // Angular velocity: max ~150 (Increased to match translation speed)
 
         // Calculate motor PWM values using mecanum wheel kinematics
+        // Fixed values for testing
+        // float vx = 3.0f;
+        // float vy = 3.0f;
+        // float omega = 3.0f;
         int16_t motor_pwm[4];
         Mecanum_Calc(vx, vy, omega, motor_pwm);
 
         // Set motor speeds (this function handles the sign and applies PWM)
-        for (int i = 0; i < 4; i++)
-        {
-            Motor_SetSpeed(i, motor_pwm[i]);
-        }
+        
+        
+            Motor_SetSpeed(0, motor_pwm[0]);
+            Motor_SetSpeed(1, motor_pwm[1]);
+            Motor_SetSpeed(2, motor_pwm[2]);
+            Motor_SetSpeed(3, motor_pwm[3]);    
+        
+        // HAL_GPIO_WritePin(LF_1_AIN2_GPIO_Port, LF_1_AIN2_Pin, GPIO_PIN_SET);
+        // HAL_GPIO_WritePin(LF_1_AIN1_GPIO_Port, LF_1_AIN1_Pin, GPIO_PIN_RESET);
+        // __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, 35560);
 
-        double dutyUpDown = ((10.00 * UpDownPosition/100) + 2.50) / 100.00 * 20000.00;
-        double dutyLeftRight = ((10.00 * LeftRightPosition/100) + 2.50) / 100.00 * 20000.00;
-
+        double dutyUpDown = ((10.00 * UpDownPosition / 100) + 2.50) / 100.00 * 20000.00;
+        double dutyLeftRight = ((10.00 * LeftRightPosition / 100) + 2.50) / 100.00 * 20000.00;
+        Motor_Init();
         if (PS2.UP)
         {
             UpDownPosition += positionChangeSpeed;
@@ -233,6 +256,13 @@ int main(void)
             LeftRightPosition += positionChangeSpeed;
         }
 
+        // if (PS2.CIRCLE)
+        // {
+        //     Motor_SetSpeed(1, 35580);
+        // }else{
+        //     Motor_SetSpeed(1, 0);
+        // }
+
         if (PS2.SQUARE)
         {
             UpDownPosition = 20;
@@ -241,6 +271,11 @@ int main(void)
 
         if (PS2.R2)
         {
+            HAL_GPIO_WritePin(BOOST_GPIO_Port, BOOST_Pin, GPIO_PIN_SET);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(BOOST_GPIO_Port, BOOST_Pin, GPIO_PIN_RESET);
         }
 
         __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_2, dutyUpDown);
@@ -248,7 +283,7 @@ int main(void)
 
         // Control loop frequency: 50ms = 20Hz
         // Adjust if needed for different control responsiveness
-        HAL_Delay(50);
+        HAL_Delay(5);
     }
     /* USER CODE END 3 */
 }

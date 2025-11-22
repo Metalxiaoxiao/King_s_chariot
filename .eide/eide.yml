@@ -142,7 +142,7 @@ targets:
         interface: cmsis-dap-v1
         target: stm32f1x
       STLink:
-        address: ""
+        address: "0x08000000"
         bin: ""
         elFile: None
         optionBytes: .eide/king_s_chariot.st.option.bytes.ini
